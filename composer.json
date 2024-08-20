@@ -1,0 +1,30 @@
+{
+	"name": "florianziegler/kirby-photo-stats",
+	"description": "A Kirby plugin to calculate and display statistics about published photos.",
+	"version": "1.0.0",
+	"type": "kirby-plugin",
+	"homepage": "https://github.com/florianziegler/kirby-photo-stats",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Florian Ziegler",
+			"email": "florian@haptiq.studio"
+		}
+	],
+	"support": {
+		"issues": "https://github.com/florianziegler/kirby-photo-stats/issues",
+		"source": "https://github.com/florianziegler/kirby-photo-stats",
+		"docs": "https://github.com/florianziegler/kirby-photo-stats"
+	},
+	"keywords": [
+		"php",
+		"kirby",
+		"plugin",
+		"kirby-plugin",
+		"kirby-cms",
+		"photoblog",
+		"photography",
+		"statistics",
+		"stats"
+	]
+}

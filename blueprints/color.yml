@@ -1,0 +1,5 @@
+label: Monochrome/Color
+type: select
+options:
+  monochrome: Monochrome
+  color: Color
