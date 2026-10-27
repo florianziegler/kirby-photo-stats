@@ -47,6 +47,9 @@ class PhotoStatsGenerator {
 				
 				// Delete marker file
 				unlink( $file );
+
+				// Stats are generated, e.g. to clear the cached stats page
+				kirby()->trigger( 'florianziegler.photo-stats.generate:after', [ 'pages' => $pages ] );
 			} catch ( \Throwable $e ) {
 				// Log error (Throwable also catches PHP errors like TypeError)
 				$duration = round( microtime( true ) - $start_time, 2 );

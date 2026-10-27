@@ -25,7 +25,7 @@ By default the plugin uses `$site->pages()` as the base for the stats generation
 You can define a callback function in your `site/config/config.php` file to override this default, just make sure it returns a [pages collection](https://getkirby.com/docs/reference/objects/cms/pages):
 
 ```php
-'florianziegler.photo-stats.pages' => my_custom_callback_function(),
+'florianziegler.photo-stats.pages' => 'my_custom_callback_function',
 ```
 
 You should probably put your callback function into a [custom plugin](https://getkirby.com/docs/guide/plugins/custom-plugins).
@@ -162,6 +162,24 @@ You can change what is logged:
 - `false`: Nothing is logged.
 
 Only one run can happen at a time: If the stats are still being generated when the next call comes in, that call is skipped. The lock file for this is stored in Kirby's cache folder (`site/cache` by default).
+
+### Hook after generating the stats
+
+After every successful run, the plugin triggers the `florianziegler.photo-stats.generate:after` hook. It gets the `$pages` the stats are calculated from (the result of your callback function, see [Define your source pages](#define-your-source-pages), otherwise `$site->pages()`).
+
+#### Page cache
+
+If you use Kirby's page cache, the cached stats page keeps showing the old stats, since generating them does not change any content. Use the hook to remove the stats page from the cache:
+
+```php
+'hooks' => [
+	'florianziegler.photo-stats.generate:after' => function ($pages) {
+		kirby()->cache('pages')->remove('stats.latest.html');
+	},
+],
+```
+
+Replace `stats` with the id of the page that shows the stats snippet. On a multi-language site, the cache key also contains the language code, e.g. `stats.en.latest.html`, so remove one key per language.
 
 ---
 
