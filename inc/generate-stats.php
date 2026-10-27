@@ -15,11 +15,76 @@ class PhotoStatsGenerator {
 	public function maybe_run_generator( $pages ) {
 		$file = dirname( __DIR__, 1 ) . '/GENERATE_STATS';
 		if ( file_exists( $file ) ) {
-			// Generate stats
-			$this->generate_stats( $pages );
-			// Delete "marker" file
-			unlink( $file );
+			// Lock, so only one generator runs at a time.
+			$lock_file = kirby()->root( 'cache' ) . '/photostats.lock';
+			$lock = fopen( $lock_file, 'c+' );
+
+			if ( ! flock( $lock, LOCK_EX | LOCK_NB ) ) {
+				$this->log_message( 'Skipped: Already running (PID: ' . trim( stream_get_contents( $lock ) ) . ')', 'info' );
+				fclose( $lock );
+				return;
+			}
+
+			// Note the PID of this run in the lock file
+			ftruncate( $lock, 0 );
+			fwrite( $lock, (string) getmypid() );
+			fflush( $lock );
+
+			// Start timing
+			$start_time = microtime( true );
+			$start_memory = memory_get_usage( true );
+			
+			try {
+				// Generate stats
+				$this->generate_stats( $pages );
+				
+				// Calculate duration and memory
+				$duration = round( microtime( true ) - $start_time, 2 );
+				$memory_used = round( (memory_get_peak_usage( true ) - $start_memory ) / 1024 / 1024, 2 );
+				
+				// Log success
+				$this->log_message( "Success | Duration: {$duration}s | Memory: {$memory_used}MB | PID: " . getmypid(), 'info' );
+				
+				// Delete marker file
+				unlink( $file );
+			} catch ( \Throwable $e ) {
+				// Log error (Throwable also catches PHP errors like TypeError)
+				$duration = round( microtime( true ) - $start_time, 2 );
+				$this->log_message( "Error | Duration: {$duration}s | Error: " . $e->getMessage() . " | PID: " . getmypid(), 'error' );
+			} finally {
+				// Release the lock
+				flock( $lock, LOCK_UN );
+				fclose( $lock );
+			}
 		}
+	}
+
+
+	/**
+	 * Log a message to the photostats log file.
+	 *
+	 * What is logged depends on the `log` option:
+	 * 'errors' (default) only errors, 'all' everything, false nothing.
+	 *
+	 * @param string $message Message to log
+	 * @param string $level 'error' or 'info'
+	 */
+	private function log_message( $message, $level ) {
+		$log = kirby()->option( 'florianziegler.photo-stats.log', 'errors' );
+		if ( $log === false || ( $log !== 'all' && $level !== 'error' ) ) {
+			return;
+		}
+
+		$log_file = kirby()->root( 'logs' ) . '/photostats.log';
+		$log_dir = dirname( $log_file );
+		
+		// Create logs directory if it doesn't exist
+		if ( ! file_exists( $log_dir ) ) {
+			mkdir( $log_dir, 0755, true );
+		}
+		
+		$log_entry = date('Y-m-d H:i:s') . " | " . $message . "\n";
+		file_put_contents( $log_file, $log_entry, FILE_APPEND );
 	}
 
 
@@ -356,6 +421,7 @@ class PhotoStatsGenerator {
 		 */
 		$images = $pages->files()->filterBy('type', 'image');
 		$crop_cameras = Kirby()->option( 'florianziegler.photo-stats.cropCameras' );
+		$medium_format_cameras = Kirby()->option( 'florianziegler.photo-stats.mediumFormatCameras', [] );
 		$cameras = [];
 		$camera_meta = [];
 		$fls = [];
@@ -400,6 +466,18 @@ class PhotoStatsGenerator {
 
 					if ( $focal_length == 27 ) {
 						$focal_length = 28;
+					}
+				}
+				elseif ( in_array( $model, $medium_format_cameras ) ) {
+					$focal_length = round( $focal_length * 0.79 );
+
+					// Correct for rounding issues to exactly hit the correct focal lengths
+					if ( $focal_length == 36 ) {
+						$focal_length = 35;
+					}
+
+					if ( $focal_length == 87 ) {
+						$focal_length = 85;
 					}
 				}
 

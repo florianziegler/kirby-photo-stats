@@ -5,7 +5,10 @@ Kirby::plugin( 'florianziegler/photo-stats', [
 	'options' => [
 		'dateField' => 'published',
 		'cronRoute' => 'generate-photo-stats',
-		'cropCameras' => [ 'X100', 'X100S', 'X100T', 'X100F', 'X100V', 'X100VI', 'X-E1', 'X-E2', 'X-E3', 'X-E4', 'X-H1', 'X-H2', 'X-Pro1', 'X-Pro2', 'X-Pro3', 'X-T1', 'X-T2', 'X-T3', 'X-T4', 'X-T5' ],
+		'log' => 'errors',
+		'ignoreFileTemplates' => [],
+		'cropCameras' => [ 'X100', 'X100S', 'X100T', 'X100F', 'X100V', 'X100VI', 'X70', 'XF10', 'X-E1', 'X-E2', 'X-E2S', 'X-E3', 'X-E4', 'X-E5', 'X-H1', 'X-H2', 'X-H2S', 'X-Pro1', 'X-Pro2', 'X-Pro3', 'X-T1', 'X-T2', 'X-T3', 'X-T4', 'X-T5', 'X-T10', 'X-T20', 'X-T30', 'X-T30 II', 'X-T50', 'X-T100', 'X-T200', 'X-S10', 'X-S20', 'X-M1', 'X-M5', 'X-A1', 'X-A2', 'X-A3', 'X-A5', 'X-A7', 'X-A10', 'X-A20' ],
+		'mediumFormatCameras' => [ 'GFX 50S', 'GFX 50R', 'GFX 50S II', 'GFX100', 'GFX100S', 'GFX100 II', 'GFX100S II', 'GFX100RF' ],
 	],
 	'snippets' => [
 		'photo-stats' => __DIR__ . '/snippets/photo-stats.php',
@@ -47,6 +50,9 @@ Kirby::plugin( 'florianziegler/photo-stats', [
 
 		// Mark images as either monochrome or color
 		'file.create:after' => function( $file ) {
+			if ( in_array( $file->template(), kirby()->option( 'florianziegler.photo-stats.ignoreFileTemplates', [] ) ) ) {
+				return;
+			}
 			if ( $file->type() == 'image' && class_exists( 'Imagick' ) ) {
 				$imagick = new Imagick( $file->realpath() );
 				$imagick->transformImageColorspace( imagick::COLORSPACE_HSL );

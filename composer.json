@@ -1,7 +1,7 @@
 {
 	"name": "florianziegler/kirby-photo-stats",
 	"description": "A Kirby plugin to calculate and display statistics about published photos.",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"type": "kirby-plugin",
 	"homepage": "https://github.com/florianziegler/kirby-photo-stats",
 	"license": "MIT",

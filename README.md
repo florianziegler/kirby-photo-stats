@@ -48,6 +48,18 @@ To let the plugin know for which camera models to use the 1.5 multiplier, you ca
 'florianziegler.photo-stats.cropCameras' => [ 'X100S', 'X-T1', 'X-Pro2' ],
 ```
 
+### Define medium format cameras
+
+Medium format sensors are larger than full frame, so their focal lengths are multiplied by 0.79 to get the full-frame equivalent (based on a 44 x 33 mm sensor like in the Fujifilm GFX cameras), eg. a 63mm lens is a 50mm in terms of full frame.
+
+The Fujifilm GFX cameras are included by default. To change the list, define the camera models in your options:
+
+```php
+'florianziegler.photo-stats.mediumFormatCameras' => [ 'GFX100S', 'GFX100RF' ],
+```
+
+The model names have to match the camera model in the EXIF data of your images exactly.
+
 ### Decide which stats you want to include
 
 The following statistics are available and included by default:
@@ -94,6 +106,16 @@ This field is used to calculate the "Monochrome ratio" statistic.
 
 There is a hook in place, which will set the value of this field automatically, when you upload images via the panel. (The Imagick PHP extension is required. Please note, that this will only work for images uploaded after the plugin has been installed.)
 
+### Skip the color detection for some files
+
+Loading very large files (e.g. high resolution TIFFs) with Imagick is slow and needs a lot of memory. You can exclude files from the automatic color detection by their [file template](https://getkirby.com/docs/guide/files/file-blueprints):
+
+```php
+'florianziegler.photo-stats.ignoreFileTemplates' => [ 'print-master' ],
+```
+
+Defaults to an empty array, so all images are checked.
+
 ---
 
 ## Update the stats page
@@ -121,7 +143,25 @@ Setup a cron job on your server to run once every minute:
 1. Log in via SSH.
 2. Type `crontab -e` in your terminal.
 3. Paste the following line `* * * * * curl https://YOUR_SITE_URL/generate-photo-stats > /dev/null` (replace with the actual URL and cron endpoint, see above).
-4. The type `:wq` (colon wq) to save.
+4. Then type `:wq` (colon wq) to save.
+
+The stats are only generated, when there is something to update (see above), so most of these calls return right away.
+
+### Logging
+
+By default, failed runs are logged to `photostats.log` in Kirby's logs folder (`site/logs` by default), including the error message. After a failed run, the stats are generated again on the next call.
+
+You can change what is logged:
+
+```php
+'florianziegler.photo-stats.log' => 'all',
+```
+
+- `'errors'` (default): Only failed runs.
+- `'all'`: Every run, including its duration and memory usage, and skipped runs (see below).
+- `false`: Nothing is logged.
+
+Only one run can happen at a time: If the stats are still being generated when the next call comes in, that call is skipped. The lock file for this is stored in Kirby's cache folder (`site/cache` by default).
 
 ---
 
